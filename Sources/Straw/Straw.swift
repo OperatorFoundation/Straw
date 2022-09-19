@@ -11,6 +11,16 @@ import Chord
 
 public class Straw
 {
+    public var count: Int
+    {
+        let result: Int = AsyncAwaitSynchronizer<Int>.sync
+        {
+            return await self.actor.count
+        }
+        
+        return result
+    }
+    
     let actor: StrawActor
     
     public convenience init()
