@@ -14,6 +14,11 @@ public actor StrawActor
         return self.buffer.reduce(0) { $0 + $1.count }
     }
     
+    public var isEmpty: Bool
+    {
+        return self.count == 0
+    }
+    
     var buffer: [Data] = []
 
     public init()

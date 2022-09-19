@@ -21,6 +21,11 @@ public class Straw
         return result
     }
     
+    public var isEmpty: Bool
+    {
+        return self.count == 0
+    }
+    
     let actor: StrawActor
     
     public convenience init()
