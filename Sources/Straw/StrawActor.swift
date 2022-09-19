@@ -9,6 +9,11 @@ import Foundation
 
 public actor StrawActor
 {
+    public var count: Int
+    {
+        return self.buffer.reduce(0) { $0 + $1.count }
+    }
+    
     var buffer: [Data] = []
 
     public init()
