@@ -11,7 +11,7 @@ final class StrawTests: XCTestCase {
 
         Task
         {
-            let straw = Straw()
+            let straw = StrawActor()
             await straw.write(input)
             let result = try await straw.read()
 
@@ -26,7 +26,7 @@ final class StrawTests: XCTestCase {
 
         Task
         {
-            let straw = Straw()
+            let straw = StrawActor()
             await straw.write(input)
             await straw.write(input)
             let result = try await straw.read()
@@ -42,7 +42,7 @@ final class StrawTests: XCTestCase {
 
         Task
         {
-            let straw = Straw()
+            let straw = StrawActor()
             await straw.write(input)
             await straw.write(input)
             let result = try await straw.readAllChunks()
@@ -58,7 +58,7 @@ final class StrawTests: XCTestCase {
 
         Task
         {
-            let straw = Straw()
+            let straw = StrawActor()
             await straw.write(input)
             await straw.write(input)
             let result = try await straw.read(size: 1)
@@ -74,7 +74,7 @@ final class StrawTests: XCTestCase {
 
         Task
         {
-            let straw = Straw()
+            let straw = StrawActor()
             await straw.write(input)
             await straw.write(input)
             let result = try await straw.read(size: 5)
@@ -90,7 +90,7 @@ final class StrawTests: XCTestCase {
 
         Task
         {
-            let straw = Straw()
+            let straw = StrawActor()
             await straw.write(input)
             await straw.write(input)
             let result = try await straw.read(maxSize: 10)

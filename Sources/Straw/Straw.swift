@@ -2,135 +2,85 @@
 //  Straw.swift
 //  
 //
-//  Created by Dr. Brandon Wiley on 8/11/22.
+//  Created by Joshua Clark on 9/19/22.
 //
 
 import Foundation
 
-public actor Straw
+import Chord
+
+public class Straw
 {
-    var buffer: [Data] = []
-
-    public init()
+    let actor: StrawActor
+    
+    public init(actor: StrawActor)
     {
+        self.actor = actor
     }
-
+    
     public func write(_ chunk: Data)
     {
-        self.buffer.append(chunk)
+        AsyncAwaitEffectSynchronizer.sync
+        {
+            await self.actor.write(chunk)
+        }
     }
 
     public func write(_ chunks: [Data])
     {
-        self.buffer.append(contentsOf: chunks)
+        AsyncAwaitEffectSynchronizer.sync
+        {
+            await self.actor.write(chunks)
+        }
     }
 
     public func read() throws -> Data
     {
-        return self.buffer.removeFirst()
+        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
+        {
+            return try await self.actor.read()
+        }
+        
+        return result
     }
 
     public func readAllChunks() throws -> [Data]
     {
-        if self.buffer.isEmpty
+        let result: [Data] = try AsyncAwaitThrowingSynchronizer<[Data]>.sync
         {
-            throw StrawError.bufferEmpty
+            return try await self.actor.readAllChunks()
         }
-
-        let result = self.buffer
-        self.buffer = []
+        
         return result
     }
 
     public func readAllData() throws -> Data
     {
-        if self.buffer.isEmpty
+        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
         {
-            throw StrawError.bufferEmpty
+            return try await self.actor.readAllData()
         }
-
-        var result = Data()
-        for chunk in self.buffer
-        {
-            result.append(chunk)
-        }
-
-        self.buffer = []
-
+        
         return result
     }
 
     public func read(size: Int) throws -> Data
     {
-        guard size > 0 else
+        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
         {
-            throw StrawError.badReadSize(size)
+            return try await self.actor.read(size: size)
         }
-
-        let count = self.buffer.reduce(0) { $0 + $1.count }
-        guard count >= size else
-        {
-            throw StrawError.notEnoughBytes(size, count)
-        }
-
-        var result = Data()
-        while result.count < size
-        {
-            var chunk = self.buffer.removeFirst()
-            let bytesNeeded = size - result.count
-            if chunk.count <= bytesNeeded
-            {
-                result.append(chunk)
-            }
-            else // chunk.count > bytesNeeded
-            {
-                let bytes = chunk[0..<bytesNeeded]
-                result.append(bytes)
-                chunk = chunk[bytesNeeded...]
-                self.buffer.insert(chunk, at: 0)
-            }
-        }
-
+        
         return result
     }
 
     public func read(maxSize: Int) throws -> Data
     {
-        guard maxSize > 0 else
+        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
         {
-            throw StrawError.badReadSize(maxSize)
+            return try await self.actor.read(maxSize: maxSize)
         }
-
-        if self.buffer.isEmpty
-        {
-            throw StrawError.bufferEmpty
-        }
-
-        var result = Data()
-        while result.count < maxSize, !self.buffer.isEmpty
-        {
-            var chunk = self.buffer.removeFirst()
-            let bytesNeeded = maxSize - result.count
-            if chunk.count <= bytesNeeded
-            {
-                result.append(chunk)
-            }
-            else // chunk.count > bytesNeeded
-            {
-                let bytes = chunk[0..<bytesNeeded]
-                result.append(bytes)
-                chunk = chunk[bytesNeeded...]
-                self.buffer.insert(chunk, at: 0)
-            }
-        }
-
+        
         return result
     }
-}
-
-public enum StrawError: Error
-{
-    case bufferEmpty
-    case badReadSize(Int)
-    case notEnoughBytes(Int, Int) // requested, actual
 }
