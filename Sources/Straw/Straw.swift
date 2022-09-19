@@ -13,6 +13,12 @@ public class Straw
 {
     let actor: StrawActor
     
+    public convenience init()
+    {
+        let strawActor = StrawActor()
+        self.init(actor: strawActor)
+    }
+    
     public init(actor: StrawActor)
     {
         self.actor = actor
