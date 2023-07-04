@@ -91,7 +91,7 @@ public class Straw
         {
             return try await self.actor.read(size: size)
         }
-        
+        print("result: \(result)")
         return result
     }
 
