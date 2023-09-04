@@ -158,6 +158,12 @@ public class UnsafeStraw
         return result
     }
 
+    public func peek(offset: Int, size: Int) throws -> Data
+    {
+        let data = try self.peek(size: offset + size)
+        return data[offset...]
+    }
+
     public func read(maxSize: Int) throws -> Data
     {
         guard maxSize > 0 else
