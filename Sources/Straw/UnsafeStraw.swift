@@ -1,24 +1,25 @@
 //
-//  Straw.swift
+//  UnsafeStraw.swift
 //  
 //
-//  Created by Dr. Brandon Wiley on 8/11/22.
+//  Created by Dr. Brandon Wiley on 9/4/23.
 //
 
 import Foundation
 
-public actor StrawActor
+// A variant of Straw for when you don't need thread safety
+public class UnsafeStraw
 {
     public var count: Int
     {
         return self.buffer.reduce(0) { $0 + $1.count }
     }
-    
+
     public var isEmpty: Bool
     {
         return self.count == 0
     }
-    
+
     var buffer: [Data] = []
 
     public init()
@@ -224,11 +225,4 @@ public actor StrawActor
 
         return result
     }
-}
-
-public enum StrawError: Error
-{
-    case bufferEmpty
-    case badReadSize(Int)
-    case notEnoughBytes(Int, Int) // requested, actual
 }
