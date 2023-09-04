@@ -225,4 +225,9 @@ public class UnsafeStraw
 
         return result
     }
+
+    public func clear(_ size: Int) throws
+    {
+        let _ = try self.read(size: size)
+    }
 }
