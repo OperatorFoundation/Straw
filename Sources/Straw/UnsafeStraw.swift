@@ -38,7 +38,14 @@ public class UnsafeStraw
 
     public func read() throws -> Data
     {
-        return self.buffer.removeFirst()
+        if self.buffer.isEmpty
+        {
+            return Data()
+        }
+        else
+        {
+            return self.buffer.removeFirst()
+        }
     }
 
     public func readAllChunks() throws -> [Data]
@@ -91,7 +98,7 @@ public class UnsafeStraw
     {
         guard size > 0 else
         {
-            throw StrawError.badReadSize(size)
+            return Data()
         }
 
         let count = self.buffer.reduce(0) { $0 + $1.count }
@@ -125,7 +132,7 @@ public class UnsafeStraw
     {
         guard size > 0 else
         {
-            throw StrawError.badReadSize(size)
+            return Data()
         }
 
         let count = self.buffer.reduce(0) { $0 + $1.count }
@@ -168,7 +175,7 @@ public class UnsafeStraw
     {
         guard maxSize > 0 else
         {
-            throw StrawError.badReadSize(maxSize)
+            return Data()
         }
 
         if self.buffer.isEmpty
@@ -201,7 +208,7 @@ public class UnsafeStraw
     {
         guard maxSize > 0 else
         {
-            throw StrawError.badReadSize(maxSize)
+            return Data()
         }
 
         if self.buffer.isEmpty

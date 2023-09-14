@@ -37,7 +37,14 @@ public actor StrawActor
 
     public func read() throws -> Data
     {
-        return self.buffer.removeFirst()
+        if self.buffer.isEmpty
+        {
+            return Data()
+        }
+        else
+        {
+            return self.buffer.removeFirst()
+        }
     }
 
     public func readAllChunks() throws -> [Data]
@@ -56,7 +63,7 @@ public actor StrawActor
     {
         if self.buffer.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return Data()
         }
 
         var result = Data()
@@ -74,7 +81,7 @@ public actor StrawActor
     {
         if self.buffer.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return Data()
         }
 
         var result = Data()
@@ -90,7 +97,7 @@ public actor StrawActor
     {
         guard size > 0 else
         {
-            throw StrawError.badReadSize(size)
+            return Data()
         }
 
         let count = self.buffer.reduce(0) { $0 + $1.count }
@@ -124,7 +131,7 @@ public actor StrawActor
     {
         guard size > 0 else
         {
-            throw StrawError.badReadSize(size)
+            return Data()
         }
 
         let count = self.buffer.reduce(0) { $0 + $1.count }
@@ -161,12 +168,12 @@ public actor StrawActor
     {
         guard maxSize > 0 else
         {
-            throw StrawError.badReadSize(maxSize)
+            return Data()
         }
 
         if self.buffer.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return Data()
         }
 
         var result = Data()
@@ -194,12 +201,12 @@ public actor StrawActor
     {
         guard maxSize > 0 else
         {
-            throw StrawError.badReadSize(maxSize)
+            return Data()
         }
 
         if self.buffer.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return Data()
         }
 
         var result = Data()
