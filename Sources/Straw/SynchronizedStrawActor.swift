@@ -102,9 +102,9 @@ public actor SynchronizedStrawActor
             }
             else // chunk.count > bytesNeeded
             {
-                let bytes = chunk[0..<bytesNeeded]
+                let bytes = Data(chunk[0..<bytesNeeded])
                 result.append(bytes)
-                chunk = chunk[bytesNeeded...]
+                chunk = Data(chunk[bytesNeeded...])
                 self.buffer.insert(chunk, at: 0)
                 self.lock.signal()
             }
@@ -133,9 +133,9 @@ public actor SynchronizedStrawActor
             }
             else // chunk.count > bytesNeeded
             {
-                let bytes = chunk[0..<bytesNeeded]
+                let bytes = Data(chunk[0..<bytesNeeded])
                 result.append(bytes)
-                chunk = chunk[bytesNeeded...]
+                chunk = Data(chunk[bytesNeeded...])
                 self.buffer.insert(chunk, at: 0)
 
                 self.lock.signal()

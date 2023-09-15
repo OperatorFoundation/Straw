@@ -136,12 +136,12 @@ public class UnsafeStraw
             }
             else // chunk.count > bytesNeeded
             {
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop D")
-                let bytes = chunk[0..<bytesNeeded]
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop D \(chunk.count) \(bytesNeeded)")
+                let bytes = Data(chunk[0..<bytesNeeded])
                 self.logger?.trace("UnsafeStraw.read(size:) - in loop E")
                 result.append(bytes)
                 self.logger?.trace("UnsafeStraw.read(size:) - in loop F")
-                chunk = chunk[bytesNeeded...]
+                chunk = Data(chunk[bytesNeeded...])
                 self.logger?.trace("UnsafeStraw.read(size:) - in loop G")
                 self.buffer.insert(chunk, at: 0)
                 self.logger?.trace("UnsafeStraw.read(size:) - in loop H")
@@ -181,9 +181,9 @@ public class UnsafeStraw
             }
             else // chunk.count > bytesNeeded
             {
-                let bytes = chunk[0..<bytesNeeded]
+                let bytes = Data(chunk[0..<bytesNeeded])
                 result.append(bytes)
-                chunk = chunk[bytesNeeded...]
+                chunk = Data(chunk[bytesNeeded...])
             }
 
             index = index + 1
@@ -195,7 +195,7 @@ public class UnsafeStraw
     public func peek(offset: Int, size: Int) throws -> Data
     {
         let data = try self.peek(size: offset + size)
-        return data[offset...]
+        return Data(data[offset...])
     }
 
     public func read(maxSize: Int) throws -> Data
@@ -221,9 +221,9 @@ public class UnsafeStraw
             }
             else // chunk.count > bytesNeeded
             {
-                let bytes = chunk[0..<bytesNeeded]
+                let bytes = Data(chunk[0..<bytesNeeded])
                 result.append(bytes)
-                chunk = chunk[bytesNeeded...]
+                chunk = Data(chunk[bytesNeeded...])
                 self.buffer.insert(chunk, at: 0)
             }
         }
@@ -255,9 +255,9 @@ public class UnsafeStraw
             }
             else // chunk.count > bytesNeeded
             {
-                let bytes = chunk[0..<bytesNeeded]
+                let bytes = Data(chunk[0..<bytesNeeded])
                 result.append(bytes)
-                chunk = chunk[bytesNeeded...]
+                chunk = Data(chunk[bytesNeeded...])
             }
 
             index = index + 1
