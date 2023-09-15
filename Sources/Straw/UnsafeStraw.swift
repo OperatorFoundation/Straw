@@ -125,17 +125,26 @@ public class UnsafeStraw
             self.logger?.trace("UnsafeStraw.read(size:) - in loop \(result.count) \(size) \(count) \(self.buffer.count)")
 
             var chunk = self.buffer.removeFirst()
+            self.logger?.trace("UnsafeStraw.read(size:) - in loop A")
             let bytesNeeded = size - result.count
+            self.logger?.trace("UnsafeStraw.read(size:) - in loop B")
             if chunk.count <= bytesNeeded
             {
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop C")
                 result.append(chunk)
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop C-2")
             }
             else // chunk.count > bytesNeeded
             {
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop D")
                 let bytes = chunk[0..<bytesNeeded]
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop E")
                 result.append(bytes)
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop F")
                 chunk = chunk[bytesNeeded...]
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop G")
                 self.buffer.insert(chunk, at: 0)
+                self.logger?.trace("UnsafeStraw.read(size:) - in loop H")
             }
 
             self.logger?.trace("UnsafeStraw.read(size:) - end of loop \(result.count) \(size) \(count) \(self.buffer.count)")
