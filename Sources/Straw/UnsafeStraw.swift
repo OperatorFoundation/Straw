@@ -6,10 +6,13 @@
 //
 
 import Foundation
+import Logging
 
 // A variant of Straw for when you don't need thread safety
 public class UnsafeStraw
 {
+    let logger: Logger?
+
     public var count: Int
     {
         return self.buffer.reduce(0) { $0 + $1.count }
@@ -22,8 +25,9 @@ public class UnsafeStraw
 
     var buffer: [Data] = []
 
-    public init()
+    public init(_ logger: Logger? = nil)
     {
+        self.logger = logger
     }
 
     public func write(_ chunk: Data)
@@ -96,6 +100,8 @@ public class UnsafeStraw
 
     public func read(size: Int) throws -> Data
     {
+        self.logger?.trace("UnsafeStraw.read(size: \(size))")
+
         guard size > 0 else
         {
             return Data()
@@ -113,8 +119,11 @@ public class UnsafeStraw
         }
 
         var result = Data()
+        self.logger?.trace("UnsafeStraw.read(size:) - entering loop \(result.count) \(size) \(count) \(self.buffer.count)")
         while result.count < size, !self.buffer.isEmpty
         {
+            self.logger?.trace("UnsafeStraw.read(size:) - in loop \(result.count) \(size) \(count) \(self.buffer.count)")
+
             var chunk = self.buffer.removeFirst()
             let bytesNeeded = size - result.count
             if chunk.count <= bytesNeeded
@@ -128,7 +137,11 @@ public class UnsafeStraw
                 chunk = chunk[bytesNeeded...]
                 self.buffer.insert(chunk, at: 0)
             }
+
+            self.logger?.trace("UnsafeStraw.read(size:) - end of loop \(result.count) \(size) \(count) \(self.buffer.count)")
         }
+
+        self.logger?.trace("UnsafeStraw.read(size:) - exited loop \(result.count) \(size) \(count) \(self.buffer.count)")
 
         return result
     }
