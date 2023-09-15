@@ -101,6 +101,11 @@ public class UnsafeStraw
             return Data()
         }
 
+        guard !self.buffer.isEmpty else
+        {
+            return Data()
+        }
+
         let count = self.buffer.reduce(0) { $0 + $1.count }
         guard count >= size else
         {
@@ -108,7 +113,7 @@ public class UnsafeStraw
         }
 
         var result = Data()
-        while result.count < size
+        while result.count < size, !self.buffer.isEmpty
         {
             var chunk = self.buffer.removeFirst()
             let bytesNeeded = size - result.count
