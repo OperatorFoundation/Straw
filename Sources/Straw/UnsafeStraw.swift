@@ -15,7 +15,7 @@ public class UnsafeStraw
 
     public var count: Int
     {
-        return self.buffer.reduce(0) { $0 + $1.count }
+        return self.buffer.count
     }
 
     public var isEmpty: Bool
@@ -23,7 +23,7 @@ public class UnsafeStraw
         return self.count == 0
     }
 
-    var buffer: [Data] = []
+    var buffer: Data = Data()
 
     public init(_ logger: Logger? = nil)
     {
@@ -37,65 +37,40 @@ public class UnsafeStraw
 
     public func write(_ chunks: [Data])
     {
-        self.buffer.append(contentsOf: chunks)
+        for chunk in chunks
+        {
+            self.write(chunk)
+        }
     }
 
     public func read() throws -> Data
     {
-        if self.buffer.isEmpty
-        {
-            return Data()
-        }
-        else
-        {
-            return self.buffer.removeFirst()
-        }
+        let result = self.buffer
+        self.buffer = Data()
+        return result
     }
 
     public func readAllChunks() throws -> [Data]
     {
-        if self.buffer.isEmpty
+        let result = try self.read()
+        if result.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return []
         }
-
-        let result = self.buffer
-        self.buffer = []
-        return result
+        else
+        {
+            return [result]
+        }
     }
 
     public func readAllData() throws -> Data
     {
-        if self.buffer.isEmpty
-        {
-            throw StrawError.bufferEmpty
-        }
-
-        var result = Data()
-        for chunk in self.buffer
-        {
-            result.append(chunk)
-        }
-
-        self.buffer = []
-
-        return result
+        return try self.read()
     }
 
     public func peekAllData() throws -> Data
     {
-        if self.buffer.isEmpty
-        {
-            throw StrawError.bufferEmpty
-        }
-
-        var result = Data()
-        for chunk in self.buffer
-        {
-            result.append(chunk)
-        }
-
-        return result
+        return self.buffer
     }
 
     public func read(size: Int) throws -> Data
@@ -112,45 +87,13 @@ public class UnsafeStraw
             return Data()
         }
 
-        let count = self.buffer.reduce(0) { $0 + $1.count }
-        guard count >= size else
+        guard self.count >= size else
         {
-            throw StrawError.notEnoughBytes(size, count)
+            throw StrawError.notEnoughBytes(size, self.count)
         }
 
-        var result = Data()
-        self.logger?.trace("UnsafeStraw.read(size:) - entering loop \(result.count) \(size) \(count) \(self.buffer.count)")
-        while result.count < size, !self.buffer.isEmpty
-        {
-            self.logger?.trace("UnsafeStraw.read(size:) - in loop \(result.count) \(size) \(count) \(self.buffer.count)")
-
-            var chunk = self.buffer.removeFirst()
-            self.logger?.trace("UnsafeStraw.read(size:) - in loop A")
-            let bytesNeeded = size - result.count
-            self.logger?.trace("UnsafeStraw.read(size:) - in loop B")
-            if chunk.count <= bytesNeeded
-            {
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop C")
-                result.append(chunk)
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop C-2")
-            }
-            else // chunk.count > bytesNeeded
-            {
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop D \(chunk.count) \(bytesNeeded)")
-                let bytes = Data(chunk[0..<bytesNeeded])
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop E")
-                result.append(bytes)
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop F")
-                chunk = Data(chunk[bytesNeeded...])
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop G")
-                self.buffer.insert(chunk, at: 0)
-                self.logger?.trace("UnsafeStraw.read(size:) - in loop H")
-            }
-
-            self.logger?.trace("UnsafeStraw.read(size:) - end of loop \(result.count) \(size) \(count) \(self.buffer.count)")
-        }
-
-        self.logger?.trace("UnsafeStraw.read(size:) - exited loop \(result.count) \(size) \(count) \(self.buffer.count)")
+        let result = Data(self.buffer[..<size])
+        self.buffer = Data(self.buffer[size...])
 
         return result
     }
@@ -162,40 +105,41 @@ public class UnsafeStraw
             return Data()
         }
 
-        let count = self.buffer.reduce(0) { $0 + $1.count }
-        guard count >= size else
+        guard !self.buffer.isEmpty else
         {
-            throw StrawError.notEnoughBytes(size, count)
+            return Data()
         }
 
-        var result = Data()
-        var index = 0
-        while result.count < size && index < self.buffer.count
+        guard self.count >= size else
         {
-            var chunk = self.buffer[index]
-
-            let bytesNeeded = size - result.count
-            if chunk.count <= bytesNeeded
-            {
-                result.append(chunk)
-            }
-            else // chunk.count > bytesNeeded
-            {
-                let bytes = Data(chunk[0..<bytesNeeded])
-                result.append(bytes)
-                chunk = Data(chunk[bytesNeeded...])
-            }
-
-            index = index + 1
+            throw StrawError.notEnoughBytes(size, self.count)
         }
+
+        let result = Data(self.buffer[...size])
 
         return result
     }
 
     public func peek(offset: Int, size: Int) throws -> Data
     {
-        let data = try self.peek(size: offset + size)
-        return Data(data[offset...])
+        guard size > 0 else
+        {
+            return Data()
+        }
+
+        guard !self.buffer.isEmpty else
+        {
+            return Data()
+        }
+
+        guard self.count >= size else
+        {
+            throw StrawError.notEnoughBytes(size, self.count)
+        }
+
+        let result = Data(self.buffer[offset..<size])
+
+        return result
     }
 
     public func read(maxSize: Int) throws -> Data
@@ -207,28 +151,11 @@ public class UnsafeStraw
 
         if self.buffer.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return Data()
         }
 
-        var result = Data()
-        while result.count < maxSize, !self.buffer.isEmpty
-        {
-            var chunk = self.buffer.removeFirst()
-            let bytesNeeded = maxSize - result.count
-            if chunk.count <= bytesNeeded
-            {
-                result.append(chunk)
-            }
-            else // chunk.count > bytesNeeded
-            {
-                let bytes = Data(chunk[0..<bytesNeeded])
-                result.append(bytes)
-                chunk = Data(chunk[bytesNeeded...])
-                self.buffer.insert(chunk, at: 0)
-            }
-        }
-
-        return result
+        let size = min(maxSize, self.buffer.count)
+        return try self.read(size: size)
     }
 
     public func peek(maxSize: Int) throws -> Data
@@ -240,30 +167,11 @@ public class UnsafeStraw
 
         if self.buffer.isEmpty
         {
-            throw StrawError.bufferEmpty
+            return Data()
         }
 
-        var result = Data()
-        var index = 0
-        while result.count < maxSize, index <= self.buffer.count
-        {
-            var chunk = self.buffer[index]
-            let bytesNeeded = maxSize - result.count
-            if chunk.count <= bytesNeeded
-            {
-                result.append(chunk)
-            }
-            else // chunk.count > bytesNeeded
-            {
-                let bytes = Data(chunk[0..<bytesNeeded])
-                result.append(bytes)
-                chunk = Data(chunk[bytesNeeded...])
-            }
-
-            index = index + 1
-        }
-
-        return result
+        let size = min(maxSize, self.buffer.count)
+        return try self.peek(size: size)
     }
 
     public func clear(_ size: Int) throws
