@@ -137,7 +137,7 @@ public class UnsafeStraw
             throw StrawError.notEnoughBytes(size, self.count)
         }
 
-        let result = Data(self.buffer[offset..<size])
+        let result = Data(self.buffer[offset..<offset+size])
 
         return result
     }
