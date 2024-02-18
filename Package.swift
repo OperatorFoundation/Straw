@@ -19,7 +19,7 @@ let package = Package(
         // .package(url: /* package url */, from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-log", from: "1.5.3"),
 
-        .package(url: "https://github.com/OperatorFoundation/Chord", branch: "0.1.1"),
+        .package(url: "https://github.com/OperatorFoundation/Chord", from: "0.1.1"),
         .package(url: "https://github.com/OperatorFoundation/Datable", from: "4.0.0"),
     ],
     targets: [
