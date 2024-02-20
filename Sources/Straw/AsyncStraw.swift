@@ -13,21 +13,21 @@ public actor AsyncStraw
 {
     let logger: Logger?
 
-    public var count: Int
-    {
-        return self.buffer.count
-    }
-
-    public var isEmpty: Bool
-    {
-        return self.count == 0
-    }
-
     var buffer: Data = Data()
 
     public init(_ logger: Logger? = nil)
     {
         self.logger = logger
+    }
+
+    public func count() -> Int
+    {
+        return self.buffer.count
+    }
+
+    public func isEmpty() -> Bool
+    {
+        return self.count() == 0
     }
 
     public func write(_ chunk: Data)
@@ -87,9 +87,9 @@ public actor AsyncStraw
             return Data()
         }
 
-        guard self.count >= size else
+        guard self.count() >= size else
         {
-            throw StrawError.notEnoughBytes(size, self.count)
+            throw StrawError.notEnoughBytes(size, self.count())
         }
 
         let result = Data(self.buffer[..<size])
@@ -110,9 +110,9 @@ public actor AsyncStraw
             return Data()
         }
 
-        guard self.count >= size else
+        guard self.count() >= size else
         {
-            throw StrawError.notEnoughBytes(size, self.count)
+            throw StrawError.notEnoughBytes(size, self.count())
         }
 
         let result = Data(self.buffer[...size])
@@ -132,9 +132,9 @@ public actor AsyncStraw
             return Data()
         }
 
-        guard self.count >= size else
+        guard self.count() >= size else
         {
-            throw StrawError.notEnoughBytes(size, self.count)
+            throw StrawError.notEnoughBytes(size, self.count())
         }
 
         let result = Data(self.buffer[offset..<offset+size])
