@@ -1,107 +1,267 @@
 //
-//  SyncrhonizedStraw.swift
+//  SynchronizedStraw.swift
 //
 //
-//  Created by Joshua Clark on 9/19/22.
+//  Created by Dr. Brandon Wiley on 9/4/23.
 //
 
 import Foundation
+import Logging
 
-import Chord
-
-public class SynchronizedStraw
+// A variant of Straw for when you don't need thread safety
+public actor SynchronizedStraw
 {
-    public var count: Int
+    let logger: Logger?
+
+    var buffer: Data = Data()
+
+    let lock = DispatchSemaphore(value: 0)
+
+    public init(_ logger: Logger? = nil)
     {
-        let result: Int = AsyncAwaitSynchronizer<Int>.sync
+        self.logger = logger
+    }
+
+    public func count() -> Int
+    {
+        defer
         {
-            return await self.actor.count
+            self.lock.signal()
         }
+        self.lock.wait()
 
-        return result
+        return self.buffer.count
     }
 
-    public var isEmpty: Bool
+    public func isEmpty() -> Bool
     {
-        return self.count == 0
-    }
+        defer
+        {
+            self.lock.signal()
+        }
+        self.lock.wait()
 
-    let actor: SynchronizedStrawActor
-
-    public convenience init()
-    {
-        let strawActor = SynchronizedStrawActor()
-        self.init(actor: strawActor)
-    }
-
-    public init(actor: SynchronizedStrawActor)
-    {
-        self.actor = actor
+        return self.count() == 0
     }
 
     public func write(_ chunk: Data)
     {
-        AsyncAwaitEffectSynchronizer.sync
+        defer
         {
-            await self.actor.write(chunk)
+            self.lock.signal()
         }
+        self.lock.wait()
+
+        self.buffer.append(chunk)
     }
 
     public func write(_ chunks: [Data])
     {
-        AsyncAwaitEffectSynchronizer.sync
+        defer
         {
-            await self.actor.write(chunks)
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        for chunk in chunks
+        {
+            self.write(chunk)
         }
     }
 
     public func read() throws -> Data
     {
-        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
+        defer
         {
-            return try await self.actor.read()
+            self.lock.signal()
         }
+        self.lock.wait()
 
+        let result = self.buffer
+        self.buffer = Data()
         return result
     }
 
     public func readAllChunks() throws -> [Data]
     {
-        let result: [Data] = try AsyncAwaitThrowingSynchronizer<[Data]>.sync
+        defer
         {
-            return try await self.actor.readAllChunks()
+            self.lock.signal()
         }
+        self.lock.wait()
 
-        return result
+        let result = try self.read()
+        if result.isEmpty
+        {
+            return []
+        }
+        else
+        {
+            return [result]
+        }
     }
 
     public func readAllData() throws -> Data
     {
-        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
+        defer
         {
-            return try await self.actor.readAllData()
+            self.lock.signal()
         }
+        self.lock.wait()
 
-        return result
+        return try self.read()
+    }
+
+    public func peekAllData() throws -> Data
+    {
+        defer
+        {
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        return self.buffer
     }
 
     public func read(size: Int) throws -> Data
     {
-        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
+        defer
         {
-            return try await self.actor.read(size: size)
+            self.lock.signal()
         }
+        self.lock.wait()
+
+        self.logger?.trace("UnsafeStraw.read(size: \(size))")
+
+        guard size > 0 else
+        {
+            return Data()
+        }
+
+        guard !self.buffer.isEmpty else
+        {
+            return Data()
+        }
+
+        guard self.count() >= size else
+        {
+            throw StrawError.notEnoughBytes(size, self.count())
+        }
+
+        let result = Data(self.buffer[..<size])
+        self.buffer = Data(self.buffer[size...])
+
+        return result
+    }
+
+    public func peek(size: Int) throws -> Data
+    {
+        defer
+        {
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        guard size > 0 else
+        {
+            return Data()
+        }
+
+        guard !self.buffer.isEmpty else
+        {
+            return Data()
+        }
+
+        guard self.count() >= size else
+        {
+            throw StrawError.notEnoughBytes(size, self.count())
+        }
+
+        let result = Data(self.buffer[...size])
+
+        return result
+    }
+
+    public func peek(offset: Int, size: Int) throws -> Data
+    {
+        defer
+        {
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        guard size > 0 else
+        {
+            return Data()
+        }
+
+        guard !self.buffer.isEmpty else
+        {
+            return Data()
+        }
+
+        guard self.count() >= size else
+        {
+            throw StrawError.notEnoughBytes(size, self.count())
+        }
+
+        let result = Data(self.buffer[offset..<offset+size])
 
         return result
     }
 
     public func read(maxSize: Int) throws -> Data
     {
-        let result: Data = try AsyncAwaitThrowingSynchronizer<Data>.sync
+        defer
         {
-            return try await self.actor.read(maxSize: maxSize)
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        guard maxSize > 0 else
+        {
+            return Data()
         }
 
-        return result
+        if self.buffer.isEmpty
+        {
+            return Data()
+        }
+
+        let size = min(maxSize, self.buffer.count)
+        return try self.read(size: size)
+    }
+
+    public func peek(maxSize: Int) throws -> Data
+    {
+        defer
+        {
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        guard maxSize > 0 else
+        {
+            return Data()
+        }
+
+        if self.buffer.isEmpty
+        {
+            return Data()
+        }
+
+        let size = min(maxSize, self.buffer.count)
+        return try self.peek(size: size)
+    }
+
+    public func clear(_ size: Int) throws
+    {
+        defer
+        {
+            self.lock.signal()
+        }
+        self.lock.wait()
+
+        let _ = try self.read(size: size)
     }
 }
