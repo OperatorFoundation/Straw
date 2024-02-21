@@ -55,21 +55,7 @@ public class SynchronizedStraw
         self.buffer.append(chunk)
     }
 
-    public func write(_ chunks: [Data])
-    {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
-        for chunk in chunks
-        {
-            self.write(chunk)
-        }
-    }
-
-    public func read() throws -> Data
+    public func read() -> Data
     {
         defer
         {
@@ -80,47 +66,6 @@ public class SynchronizedStraw
         let result = self.buffer
         self.buffer = Data()
         return result
-    }
-
-    public func readAllChunks() throws -> [Data]
-    {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
-        let result = try self.read()
-        if result.isEmpty
-        {
-            return []
-        }
-        else
-        {
-            return [result]
-        }
-    }
-
-    public func readAllData() throws -> Data
-    {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
-        return try self.read()
-    }
-
-    public func peekAllData() throws -> Data
-    {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
-        return self.buffer
     }
 
     public func read(size: Int) throws -> Data
