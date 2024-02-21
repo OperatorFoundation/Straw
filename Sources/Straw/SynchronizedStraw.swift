@@ -15,7 +15,7 @@ public class SynchronizedStraw
 
     var buffer: Data = Data()
 
-    let lock = DispatchSemaphore(value: 0)
+    let lock = DispatchSemaphore(value: 1)
 
     public init(_ logger: Logger? = nil)
     {
