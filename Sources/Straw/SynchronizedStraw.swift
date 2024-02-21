@@ -9,7 +9,7 @@ import Foundation
 import Logging
 
 // A variant of Straw for when you don't need thread safety
-public actor SynchronizedStraw
+public class SynchronizedStraw
 {
     let logger: Logger?
 
