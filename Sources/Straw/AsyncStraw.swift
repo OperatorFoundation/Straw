@@ -1,5 +1,5 @@
 //
-//  SynchronizedStraw.swift
+//  AsyncStraw.swift
 //
 //
 //  Created by Dr. Brandon Wiley on 9/4/23.
@@ -9,13 +9,11 @@ import Foundation
 import Logging
 
 // A variant of Straw for when you don't need thread safety
-public class SynchronizedStraw
+public actor AsyncStraw
 {
     let logger: Logger?
 
     var buffer: Data = Data()
-
-    let lock = DispatchSemaphore(value: 1)
 
     public init(_ logger: Logger? = nil)
     {
@@ -24,58 +22,59 @@ public class SynchronizedStraw
 
     public func count() -> Int
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         return self.buffer.count
     }
 
     public func isEmpty() -> Bool
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         return self.count() == 0
     }
 
     public func write(_ chunk: Data)
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         self.buffer.append(chunk)
     }
 
-    public func read() -> Data
+    public func write(_ chunks: [Data])
     {
-        defer
+        for chunk in chunks
         {
-            self.lock.signal()
+            self.write(chunk)
         }
-        self.lock.wait()
+    }
 
+    public func read() throws -> Data
+    {
         let result = self.buffer
         self.buffer = Data()
         return result
     }
 
+    public func readAllChunks() throws -> [Data]
+    {
+        let result = try self.read()
+        if result.isEmpty
+        {
+            return []
+        }
+        else
+        {
+            return [result]
+        }
+    }
+
+    public func readAllData() throws -> Data
+    {
+        return try self.read()
+    }
+
+    public func peekAllData() throws -> Data
+    {
+        return self.buffer
+    }
+
     public func read(size: Int) throws -> Data
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         self.logger?.trace("UnsafeStraw.read(size: \(size))")
 
         guard size > 0 else
@@ -101,12 +100,6 @@ public class SynchronizedStraw
 
     public func peek(size: Int) throws -> Data
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         guard size > 0 else
         {
             return Data()
@@ -129,12 +122,6 @@ public class SynchronizedStraw
 
     public func peek(offset: Int, size: Int) throws -> Data
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         guard size > 0 else
         {
             return Data()
@@ -157,12 +144,6 @@ public class SynchronizedStraw
 
     public func read(maxSize: Int) throws -> Data
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         guard maxSize > 0 else
         {
             return Data()
@@ -179,12 +160,6 @@ public class SynchronizedStraw
 
     public func peek(maxSize: Int) throws -> Data
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         guard maxSize > 0 else
         {
             return Data()
@@ -201,12 +176,6 @@ public class SynchronizedStraw
 
     public func clear(_ size: Int) throws
     {
-        defer
-        {
-            self.lock.signal()
-        }
-        self.lock.wait()
-
         let _ = try self.read(size: size)
     }
 }
